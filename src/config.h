@@ -201,6 +201,44 @@ namespace config {
       workarounds_t wa;  ///< Display-device compatibility workarounds.
     } dd;  ///< Display-device integration settings.
 
+    /**
+     * @brief Windows virtual-display lifecycle settings.
+     */
+    struct virtual_display_t {
+      /**
+       * @brief Virtual-display provider selected by configuration.
+       */
+      enum class backend_e {
+        parsec_vdd  ///< Use the installed Parsec Virtual Display Adapter.
+      };
+
+      /**
+       * @brief Windows topology policy applied after the virtual display is ready.
+       */
+      enum class mode_e {
+        extend,  ///< Keep the existing primary display and extend to the virtual display.
+        extend_primary,  ///< Extend the desktop and make the virtual display primary.
+        virtual_only  ///< Disable other displays and use only the virtual display.
+      };
+
+      /**
+       * @brief Saved virtual-display mode exposed in the Web UI.
+       */
+      struct profile_t {
+        std::string name;  ///< Human-readable profile name.
+        int width;  ///< Display width in pixels, or zero to follow the client request.
+        int height;  ///< Display height in pixels, or zero to follow the client request.
+        int refresh_rate;  ///< Display refresh rate in hertz, or zero to follow the client request.
+      };
+
+      bool enabled;  ///< Create a virtual display for the first active streaming session.
+      backend_e backend;  ///< Provider used to create and remove the display.
+      mode_e mode;  ///< Topology policy applied to the virtual display.
+      std::vector<profile_t> profiles;  ///< Saved display profiles.
+      int default_profile;  ///< Index of the profile selected for new sessions.
+      std::chrono::milliseconds startup_timeout;  ///< Maximum time to wait for Windows to enumerate the new display.
+    } virtual_display;  ///< Virtual-display integration settings.
+
     int max_bitrate;  ///< Maximum bitrate ceiling in kbps for bitrate requested from the client.
     double minimum_fps_target;  ///< Lowest framerate that will be used when streaming. Range 0-1000, 0 = half of client's requested framerate.
   };

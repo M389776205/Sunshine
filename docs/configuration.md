@@ -1397,6 +1397,85 @@ editing the `conf` file in a text editor. Use the examples as reference.
     </tr>
 </table>
 
+### virtual_display_enabled
+
+<table>
+    <tr>
+        <td>Description</td>
+        <td colspan="2">
+            Create a session-scoped virtual display before display topology and encoder setup.
+            Sunshine verifies that Windows has enumerated the display before deactivating any other display.
+            @note{Applies to Windows only. The selected virtual display driver must already be installed.}
+        </td>
+    </tr>
+    <tr><td>Default</td><td colspan="2">@code{}disabled@endcode</td></tr>
+    <tr><td>Example</td><td colspan="2">@code{}virtual_display_enabled = enabled@endcode</td></tr>
+</table>
+
+### virtual_display_backend
+
+<table>
+    <tr>
+        <td>Description</td>
+        <td colspan="2">Select the installed driver used to create the session virtual display.</td>
+    </tr>
+    <tr><td>Default</td><td colspan="2">@code{}parsec_vdd@endcode</td></tr>
+    <tr><td>Choices</td><td>parsec_vdd</td><td>Use Parsec Virtual Display Adapter.</td></tr>
+</table>
+
+### virtual_display_mode
+
+<table>
+    <tr>
+        <td>Description</td>
+        <td colspan="2">Select the Windows display topology applied after the virtual display is ready.</td>
+    </tr>
+    <tr><td>Default</td><td colspan="2">@code{}virtual_only@endcode</td></tr>
+    <tr><td rowspan="3">Choices</td><td>virtual_only</td><td>Show only on the virtual display.</td></tr>
+    <tr><td>extend_primary</td><td>Extend the desktop and make the virtual display primary.</td></tr>
+    <tr><td>extend</td><td>Extend the desktop without changing the primary display.</td></tr>
+</table>
+
+### virtual_display_profiles
+
+<table>
+    <tr>
+        <td>Description</td>
+        <td colspan="2">
+            JSON array of saved virtual-display profiles. Each entry contains `name`, `width`, `height`, and
+            `refresh_rate`. A zero width and height follow the client resolution request; a zero refresh rate follows
+            the client FPS request.
+        </td>
+    </tr>
+    <tr>
+        <td>Default</td>
+        <td colspan="2">@code{}[{"name":"Follow client","width":0,"height":0,"refresh_rate":0}]@endcode</td>
+    </tr>
+    <tr>
+        <td>Example</td>
+        <td colspan="2">@code{}virtual_display_profiles = [{"name":"2K 120 Hz","width":2560,"height":1440,"refresh_rate":120}]@endcode</td>
+    </tr>
+</table>
+
+### virtual_display_default_profile
+
+<table>
+    <tr><td>Description</td><td colspan="2">Zero-based index of the saved profile used for new sessions.</td></tr>
+    <tr><td>Default</td><td colspan="2">@code{}0@endcode</td></tr>
+    <tr><td>Range</td><td colspan="2">0-63</td></tr>
+</table>
+
+### virtual_display_startup_timeout
+
+<table>
+    <tr>
+        <td>Description</td>
+        <td colspan="2">Maximum time in milliseconds to wait for Windows to enumerate a newly created virtual display.</td>
+    </tr>
+    <tr><td>Default</td><td colspan="2">@code{}5000@endcode</td></tr>
+    <tr><td>Range</td><td colspan="2">1000-30000</td></tr>
+</table>
+
 ### max_bitrate
 
 <table>

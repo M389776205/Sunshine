@@ -35,6 +35,7 @@
 #include "utility.h"
 #include "uuid.h"
 #include "video.h"
+#include "virtual_display.h"
 
 using namespace std::literals;
 
@@ -1044,7 +1045,14 @@ namespace nvhttp {
       // We want to prepare display only if there are no active sessions at
       // the moment. This should be done before probing encoders as it could
       // change the active displays.
-      display_device::configure_display(config::video, *launch_session);
+      config::video_t effective_video_config;
+      if (!virtual_display::prepare(config::video, *launch_session, effective_video_config)) {
+        tree.put("root.<xmlattr>.status_code", 503);
+        tree.put("root.<xmlattr>.status_message", "Failed to prepare the configured virtual display. Check the Sunshine log and virtual display driver.");
+        tree.put("root.gamesession", 0);
+        return;
+      }
+      display_device::configure_display(effective_video_config, *launch_session);
 
       // Probe encoders again before streaming to ensure our chosen
       // encoder matches the active GPU (which could have changed
@@ -1110,6 +1118,7 @@ namespace nvhttp {
     print_req<SunshineHTTPS>(request);
 
     pt::ptree tree;
+    bool revert_display_configuration {false};
     auto g = util::fail_guard([&]() {
       std::ostringstream data;
 
@@ -1120,6 +1129,10 @@ namespace nvhttp {
       pt::write_xml(data, tree);
       response->write(data.str());
       response->close_connection_after_response = true;
+
+      if (revert_display_configuration) {
+        display_device::revert_configuration();
+      }
     });
 
     auto current_appid = proc::proc.running();
@@ -1153,10 +1166,18 @@ namespace nvhttp {
     const auto launch_session = make_launch_session(host_audio, args);
 
     if (no_active_sessions) {
+      revert_display_configuration = true;
       // We want to prepare display only if there are no active sessions at
       // the moment. This should be done before probing encoders as it could
       // change the active displays.
-      display_device::configure_display(config::video, *launch_session);
+      config::video_t effective_video_config;
+      if (!virtual_display::prepare(config::video, *launch_session, effective_video_config)) {
+        tree.put("root.resume", 0);
+        tree.put("root.<xmlattr>.status_code", 503);
+        tree.put("root.<xmlattr>.status_message", "Failed to prepare the configured virtual display. Check the Sunshine log and virtual display driver.");
+        return;
+      }
+      display_device::configure_display(effective_video_config, *launch_session);
 
       // Probe encoders again before streaming to ensure our chosen
       // encoder matches the active GPU (which could have changed
@@ -1195,6 +1216,7 @@ namespace nvhttp {
     tree.put("root.resume", 1);
 
     rtsp_stream::launch_session_raise(launch_session);
+    revert_display_configuration = false;
   }
 
   /**

@@ -1,0 +1,97 @@
+---
+name: Virtual Display Windows
+
+on:
+  push:
+    branches:
+      - 'codex/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: virtual-display-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Windows AMD64
+    runs-on: windows-2022
+    env:
+      MSYS2_PATH_TYPE: inherit
+      PYTHON_VERSION: '3.14'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Setup MSYS2 UCRT64
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        with:
+          msystem: ucrt64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-boost
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-cppwinrt
+            mingw-w64-ucrt-x86_64-curl-winssl
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-miniupnpc
+            mingw-w64-ucrt-x86_64-MinHook
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-nlohmann-json
+            mingw-w64-ucrt-x86_64-onevpl
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-opus
+            mingw-w64-ucrt-x86_64-toolchain
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 'lts/*'
+          cache: npm
+
+      - name: Build Web UI
+        shell: pwsh
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+
+      - name: Sync Python tools
+        shell: msys2 {0}
+        env:
+          UV_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        run: uv sync --locked --no-python-downloads --no-install-project
+
+      - name: Configure
+        shell: msys2 {0}
+        run: >-
+          cmake -B cmake-build-ci -G Ninja -S .
+          -DBUILD_TESTS=ON
+          -DBUILD_WERROR=ON
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DSUNSHINE_ASSETS_DIR=assets
+          -DSUNSHINE_ENABLE_TRAY=OFF
+          -DSUNSHINE_PUBLISHER_NAME="${GITHUB_REPOSITORY_OWNER}"
+          -DSUNSHINE_PUBLISHER_WEBSITE="https://github.com/${GITHUB_REPOSITORY}"
+          -DSUNSHINE_PUBLISHER_ISSUE_URL="https://github.com/${GITHUB_REPOSITORY}/issues"
+
+      - name: Build and test
+        shell: msys2 {0}
+        run: |
+          ninja -C cmake-build-ci test_sunshine
+          ctest --test-dir cmake-build-ci --output-on-failure

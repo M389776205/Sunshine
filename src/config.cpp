@@ -705,6 +705,82 @@ namespace config {
     }
   }  // namespace dd
 
+  namespace virtual_display {
+    /**
+     * @brief Parse a virtual-display backend from configuration text.
+     *
+     * @param value Configuration text from the virtual-display backend setting.
+     * @return Parsed backend, defaulting to Parsec VDD for unknown values.
+     */
+    video_t::virtual_display_t::backend_e backend_from_view(const std::string_view value) {
+      if (value != "parsec_vdd"sv) {
+        BOOST_LOG(warning) << "Unknown virtual display backend '"sv << value << "'. Falling back to Parsec VDD."sv;
+      }
+      return video_t::virtual_display_t::backend_e::parsec_vdd;
+    }
+
+    /**
+     * @brief Parse a virtual-display topology mode from configuration text.
+     *
+     * @param value Configuration text from the virtual-display mode setting.
+     * @return Parsed topology mode, defaulting to virtual-only for unknown values.
+     */
+    video_t::virtual_display_t::mode_e mode_from_view(const std::string_view value) {
+      if (value == "extend"sv) {
+        return video_t::virtual_display_t::mode_e::extend;
+      }
+      if (value == "extend_primary"sv) {
+        return video_t::virtual_display_t::mode_e::extend_primary;
+      }
+      if (value != "virtual_only"sv) {
+        BOOST_LOG(warning) << "Unknown virtual display mode '"sv << value << "'. Falling back to virtual-only."sv;
+      }
+      return video_t::virtual_display_t::mode_e::virtual_only;
+    }
+
+    /**
+     * @brief Parse saved virtual-display profiles from JSON configuration text.
+     *
+     * @param value JSON array containing profile objects.
+     * @return Parsed and validated profiles.
+     */
+    std::vector<video_t::virtual_display_t::profile_t> profiles_from_view(const std::string_view value) {
+      std::stringstream json_stream;
+      json_stream << "{\"profiles\":" << value << "}";
+
+      boost::property_tree::ptree json_tree;
+      boost::property_tree::read_json(json_stream, json_tree);
+
+      std::vector<video_t::virtual_display_t::profile_t> profiles;
+      for (const auto &[_, entry] : json_tree.get_child("profiles")) {
+        auto profile = video_t::virtual_display_t::profile_t {
+          entry.second.get<std::string>("name", ""),
+          entry.second.get<int>("width", 0),
+          entry.second.get<int>("height", 0),
+          entry.second.get<int>("refresh_rate", 0),
+        };
+
+        profile.width = std::clamp(profile.width, 0, 16384);
+        profile.height = std::clamp(profile.height, 0, 16384);
+        profile.refresh_rate = std::clamp(profile.refresh_rate, 0, 1000);
+        if ((profile.width == 0) != (profile.height == 0)) {
+          BOOST_LOG(warning) << "Ignoring incomplete virtual display resolution in profile '"sv << profile.name << "'."sv;
+          profile.width = 0;
+          profile.height = 0;
+        }
+        if (profile.name.empty()) {
+          profile.name = "Profile " + std::to_string(profiles.size() + 1);
+        }
+        profiles.push_back(std::move(profile));
+      }
+
+      if (profiles.empty()) {
+        profiles.push_back({"Follow client", 0, 0, 0});
+      }
+      return profiles;
+    }
+  }  // namespace virtual_display
+
   /**
    * @brief Default video configuration values used before file and CLI overrides.
    */
@@ -786,6 +862,15 @@ namespace config {
       {},  // mode_remapping
       {}  // wa
     },  // display_device
+
+    {
+      false,  // enabled
+      video_t::virtual_display_t::backend_e::parsec_vdd,  // backend
+      video_t::virtual_display_t::mode_e::virtual_only,  // mode
+      {{"Follow client", 0, 0, 0}},  // profiles
+      0,  // default_profile
+      5s  // startup_timeout
+    },  // virtual_display
 
     0,  // max_bitrate
     0  // minimum_fps_target (0 = framerate)
@@ -1682,6 +1767,17 @@ namespace config {
       int value = 0;
       int_between_f(vars, "dd_wa_hdr_toggle_delay", value, {0, 3000});
       video.dd.wa.hdr_toggle_delay = std::chrono::milliseconds {value};
+    }
+
+    bool_f(vars, "virtual_display_enabled", video.virtual_display.enabled);
+    generic_f(vars, "virtual_display_backend", video.virtual_display.backend, virtual_display::backend_from_view);
+    generic_f(vars, "virtual_display_mode", video.virtual_display.mode, virtual_display::mode_from_view);
+    generic_f(vars, "virtual_display_profiles", video.virtual_display.profiles, virtual_display::profiles_from_view);
+    int_between_f(vars, "virtual_display_default_profile", video.virtual_display.default_profile, {0, 63});
+    {
+      int value = static_cast<int>(video.virtual_display.startup_timeout.count());
+      int_between_f(vars, "virtual_display_startup_timeout", value, {1000, 30000});
+      video.virtual_display.startup_timeout = std::chrono::milliseconds {value};
     }
 
     int_f(vars, "max_bitrate", video.max_bitrate);

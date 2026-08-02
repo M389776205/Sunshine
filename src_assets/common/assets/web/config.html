@@ -260,6 +260,12 @@
               "dd_config_revert_delay": 3000,
               "dd_config_revert_on_disconnect": "disabled",
               "dd_mode_remapping": {"mixed": [], "resolution_only": [], "refresh_rate_only": []},
+              "virtual_display_enabled": "disabled",
+              "virtual_display_backend": "parsec_vdd",
+              "virtual_display_mode": "virtual_only",
+              "virtual_display_profiles": [{"name": "Follow client", "width": 0, "height": 0, "refresh_rate": 0}],
+              "virtual_display_default_profile": 0,
+              "virtual_display_startup_timeout": 5000,
               "max_bitrate": 0,
               "minimum_fps_target": 0
             },
@@ -449,7 +455,7 @@
           // TODO: let each tab's Component handle it's own data instead of doing it here
 
           // Parse the special options before population if available
-          const specialOptions = ["dd_mode_remapping", "global_prep_cmd"]
+          const specialOptions = ["dd_mode_remapping", "global_prep_cmd", "virtual_display_profiles"]
           for (const optionKey of specialOptions) {
             if (this.config.hasOwnProperty(optionKey)) {
               this.config[optionKey] = JSON.parse(this.config[optionKey]);

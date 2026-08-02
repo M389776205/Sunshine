@@ -46,6 +46,7 @@ file(GLOB NVPREFS_FILES CONFIGURE_DEPENDS
 
 # vigem
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/third-party/ViGEmClient/include")
+include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/third-party")
 
 # sunshine icon
 if(NOT DEFINED SUNSHINE_ICON_PATH)
@@ -98,6 +99,7 @@ list(PREPEND PLATFORM_LIBRARIES
         D3DCompiler
         dwmapi
         dxgi
+        cfgmgr32
         iphlpapi
         ksuser
         libssp.a

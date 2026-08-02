@@ -24,6 +24,7 @@
 #include "audio.h"
 #include "platform/common.h"
 #include "rtsp.h"
+#include "virtual_display.h"
 
 // platform-specific includes
 #ifdef _WIN32
@@ -893,6 +894,7 @@ namespace display_device {
   void revert_configuration() {
     std::lock_guard lock {DD_DATA.mutex};
     revert_configuration_unlocked(revert_option_e::try_indefinitely_with_delay);
+    virtual_display::schedule_release(DD_DATA.config_revert_delay + std::chrono::milliseconds {5000});
   }
 
   bool reset_persistence() {

@@ -46,12 +46,129 @@ function addRemappingEntry() {
 
   config.value.dd_mode_remapping[type].push(template);
 }
+
+function addVirtualDisplayProfile() {
+  config.value.virtual_display_profiles.push({
+    name: `Profile ${config.value.virtual_display_profiles.length + 1}`,
+    width: 2560,
+    height: 1440,
+    refresh_rate: 120,
+  });
+}
+
+function removeVirtualDisplayProfile(index) {
+  if (config.value.virtual_display_profiles.length <= 1) {
+    return;
+  }
+  config.value.virtual_display_profiles.splice(index, 1);
+  if (config.value.virtual_display_default_profile >= config.value.virtual_display_profiles.length) {
+    config.value.virtual_display_default_profile = config.value.virtual_display_profiles.length - 1;
+  }
+}
 </script>
 
 <template>
   <PlatformLayout :platform="platform">
     <template #windows>
       <div class="mb-3 accordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#virtual-display-options">
+              {{ $t('config.virtual_display_header') }}
+            </button>
+          </h2>
+          <div id="virtual-display-options" class="accordion-collapse collapse show">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <Checkbox id="virtual_display_enabled"
+                  locale-prefix="config"
+                  v-model="config.virtual_display_enabled"
+                  default="false"
+                ></Checkbox>
+                <div class="form-text">{{ $t('config.virtual_display_enabled_desc') }}</div>
+              </div>
+
+              <template v-if="config.virtual_display_enabled">
+                <div class="mb-3">
+                  <label for="virtual_display_backend" class="form-label">
+                    {{ $t('config.virtual_display_backend') }}
+                  </label>
+                  <select id="virtual_display_backend" class="form-select" v-model="config.virtual_display_backend">
+                    <option value="parsec_vdd">Parsec Virtual Display Adapter</option>
+                  </select>
+                  <div class="form-text">{{ $t('config.virtual_display_backend_desc') }}</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="virtual_display_mode" class="form-label">
+                    {{ $t('config.virtual_display_mode') }}
+                  </label>
+                  <select id="virtual_display_mode" class="form-select" v-model="config.virtual_display_mode">
+                    <option value="virtual_only">{{ $t('config.virtual_display_mode_virtual_only') }}</option>
+                    <option value="extend_primary">{{ $t('config.virtual_display_mode_extend_primary') }}</option>
+                    <option value="extend">{{ $t('config.virtual_display_mode_extend') }}</option>
+                  </select>
+                  <div class="form-text">{{ $t('config.virtual_display_mode_desc') }}</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" id="virtual_display_profiles">
+                    {{ $t('config.virtual_display_profiles') }}
+                  </label>
+                  <div class="form-text mb-2">{{ $t('config.virtual_display_profiles_desc') }}</div>
+                  <div class="table-responsive">
+                    <table class="table align-middle">
+                      <thead>
+                        <tr>
+                          <th scope="col">{{ $t('config.virtual_display_profile_default') }}</th>
+                          <th scope="col">{{ $t('config.virtual_display_profile_name') }}</th>
+                          <th scope="col">{{ $t('config.virtual_display_profile_width') }}</th>
+                          <th scope="col">{{ $t('config.virtual_display_profile_height') }}</th>
+                          <th scope="col">{{ $t('config.virtual_display_profile_refresh_rate') }}</th>
+                          <th scope="col"><span class="visually-hidden">{{ $t('_common.delete') }}</span></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(profile, index) in config.virtual_display_profiles" :key="index">
+                          <td>
+                            <input class="form-check-input" type="radio" name="virtual-display-default-profile"
+                                   :value="index" v-model.number="config.virtual_display_default_profile"
+                                   :aria-label="$t('config.virtual_display_profile_default')" />
+                          </td>
+                          <td><input class="form-control" type="text" v-model="profile.name" /></td>
+                          <td><input class="form-control" type="number" min="0" max="16384" v-model.number="profile.width" /></td>
+                          <td><input class="form-control" type="number" min="0" max="16384" v-model.number="profile.height" /></td>
+                          <td><input class="form-control" type="number" min="0" max="1000" v-model.number="profile.refresh_rate" /></td>
+                          <td>
+                            <button class="btn btn-outline-danger" type="button"
+                                    :disabled="config.virtual_display_profiles.length <= 1"
+                                    @click="removeVirtualDisplayProfile(index)">
+                              <Trash2 :size="16" />
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <button class="btn btn-outline-primary" type="button" @click="addVirtualDisplayProfile">
+                    &plus; {{ $t('config.virtual_display_profile_add') }}
+                  </button>
+                </div>
+
+                <div class="mb-3">
+                  <label for="virtual_display_startup_timeout" class="form-label">
+                    {{ $t('config.virtual_display_startup_timeout') }}
+                  </label>
+                  <input id="virtual_display_startup_timeout" class="form-control" type="number"
+                         min="1000" max="30000" step="500" v-model.number="config.virtual_display_startup_timeout" />
+                  <div class="form-text">{{ $t('config.virtual_display_startup_timeout_desc') }}</div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
         <div class="accordion-item">
           <h2 class="accordion-header">
             <button class="accordion-button" type="button" data-bs-toggle="collapse"
