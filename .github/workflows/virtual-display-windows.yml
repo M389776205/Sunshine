@@ -91,6 +91,7 @@ jobs:
           set +e
           set -o pipefail
           cmake -B cmake-build-ci -G Ninja -S . \
+            -DBUILD_DOCS=OFF \
             -DBUILD_TESTS=ON \
             -DBUILD_WERROR=ON \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
