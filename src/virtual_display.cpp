@@ -12,6 +12,7 @@
 #include <format>
 #include <mutex>
 #include <optional>
+#include <string_view>
 #include <thread>
 #include <unordered_set>
 
@@ -27,6 +28,7 @@
 #endif
 
 using namespace std::chrono_literals;
+using namespace std::literals;
 
 namespace virtual_display {
   namespace {
