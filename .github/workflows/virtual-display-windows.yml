@@ -107,7 +107,7 @@ jobs:
           ninja -C cmake-build-ci test_sunshine 2>&1 | tee build.log
           build_status=$?
           if [[ ${build_status} -ne 0 ]]; then
-            diagnostic="$(tail -n 80 build.log | tr '\n' ' ' | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
+            diagnostic="$(tail -n 20 build.log | tr '\n' ' ' | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
             echo "::error title=Windows build::${diagnostic}"
             exit "${build_status}"
           fi
@@ -115,7 +115,7 @@ jobs:
           ctest --test-dir cmake-build-ci --output-on-failure 2>&1 | tee test.log
           test_status=$?
           if [[ ${test_status} -ne 0 ]]; then
-            diagnostic="$(tail -n 80 test.log | tr '\n' ' ' | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
+            diagnostic="$(tail -n 20 test.log | tr '\n' ' ' | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
             echo "::error title=Windows tests::${diagnostic}"
             exit "${test_status}"
           fi
