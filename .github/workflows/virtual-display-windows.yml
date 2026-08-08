@@ -88,6 +88,7 @@ jobs:
       - name: Configure
         shell: msys2 {0}
         run: |
+          set +e
           set -o pipefail
           cmake -B cmake-build-ci -G Ninja -S . \
             -DBUILD_TESTS=ON \
