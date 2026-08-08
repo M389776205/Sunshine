@@ -754,10 +754,10 @@ namespace config {
       std::vector<video_t::virtual_display_t::profile_t> profiles;
       for (const auto &[_, entry] : json_tree.get_child("profiles")) {
         auto profile = video_t::virtual_display_t::profile_t {
-          entry.second.get<std::string>("name", ""),
-          entry.second.get<int>("width", 0),
-          entry.second.get<int>("height", 0),
-          entry.second.get<int>("refresh_rate", 0),
+          entry.get<std::string>("name", ""),
+          entry.get<int>("width", 0),
+          entry.get<int>("height", 0),
+          entry.get<int>("refresh_rate", 0),
         };
 
         profile.width = std::clamp(profile.width, 0, 16384);
