@@ -32,21 +32,29 @@ jobs:
         with:
           msystem: ucrt64
           update: true
-          install: >-
+          install: wget
+
+      - name: Install Windows build dependencies
+        shell: msys2 {0}
+        run: |
+          dependencies=(
             git
             mingw-w64-ucrt-x86_64-boost
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-cppwinrt
             mingw-w64-ucrt-x86_64-curl-winssl
             mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-graphviz
             mingw-w64-ucrt-x86_64-miniupnpc
             mingw-w64-ucrt-x86_64-MinHook
-            mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-nlohmann-json
             mingw-w64-ucrt-x86_64-onevpl
             mingw-w64-ucrt-x86_64-openssl
             mingw-w64-ucrt-x86_64-opus
+            mingw-w64-ucrt-x86_64-qt6-static
             mingw-w64-ucrt-x86_64-toolchain
+          )
+          pacman -Syu --noconfirm "${dependencies[@]}"
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -84,11 +92,13 @@ jobs:
           -DBUILD_TESTS=ON
           -DBUILD_WERROR=ON
           -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_PREFIX_PATH="${MINGW_PREFIX}/qt6-static"
           -DSUNSHINE_ASSETS_DIR=assets
           -DSUNSHINE_ENABLE_TRAY=OFF
           -DSUNSHINE_PUBLISHER_NAME="${GITHUB_REPOSITORY_OWNER}"
           -DSUNSHINE_PUBLISHER_WEBSITE="https://github.com/${GITHUB_REPOSITORY}"
           -DSUNSHINE_PUBLISHER_ISSUE_URL="https://github.com/${GITHUB_REPOSITORY}/issues"
+          -DSUNSHINE_USE_STATIC_QT=ON
 
       - name: Build and test
         shell: msys2 {0}
